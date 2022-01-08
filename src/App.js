@@ -19,6 +19,7 @@ import hail from "./images/Hail.png";
 import sleet from "./images/Sleet.png";
 
 const App = () => {
+  //state
   const [openSearch, setOpenSearch] = useState(false);
   const [lat, setLat] = useState("43.221279");
   const [lon, setLon] = useState("27.920694");
@@ -577,6 +578,7 @@ const App = () => {
       },
     ],
   });
+  const [degreeScale, setDegreeScale] = useState("c");
 
   const searchInput = useRef(null);
 
@@ -585,7 +587,7 @@ const App = () => {
     let city = searchInput.current.value;
     axios
       .get(
-        `http://dataservice.accuweather.com/locations/v1/cities/search?apikey=hMxeNsBRAECbRBY63IOQAw7daYHXj4J1&q=${city}`
+        `https://dataservice.accuweather.com/locations/v1/cities/search?apikey=hMxeNsBRAECbRBY63IOQAw7daYHXj4J1&q=${city}`
       )
       .then((response) => {
         setSearchResults(response.data);
@@ -627,7 +629,7 @@ const App = () => {
   const updateCityKey = () => {
     axios
       .get(
-        `http://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey=hMxeNsBRAECbRBY63IOQAw7daYHXj4J1&q=${lat},${lon}`
+        `https://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey=hMxeNsBRAECbRBY63IOQAw7daYHXj4J1&q=${lat},${lon}`
       )
       .then((response) => {
         setCurrentKey(response.data.Key);
@@ -638,14 +640,14 @@ const App = () => {
   useEffect(() => {
     axios
       .get(
-        `http://dataservice.accuweather.com/currentconditions/v1/${currentKey}?apikey=hMxeNsBRAECbRBY63IOQAw7daYHXj4J1&details=true`
+        `https://dataservice.accuweather.com/currentconditions/v1/${currentKey}?apikey=hMxeNsBRAECbRBY63IOQAw7daYHXj4J1&details=true`
       )
       .then((response) => {
         setCurrentCity(response.data);
       });
     axios
       .get(
-        `http://dataservice.accuweather.com/forecasts/v1/daily/5day/${currentKey}?apikey=hMxeNsBRAECbRBY63IOQAw7daYHXj4J1&metric=true`
+        `https://dataservice.accuweather.com/forecasts/v1/daily/5day/${currentKey}?apikey=hMxeNsBRAECbRBY63IOQAw7daYHXj4J1&metric=true`
       )
       .then((response) => {
         setCurrentWeek(response.data);
@@ -733,9 +735,15 @@ const App = () => {
         ></img>
         <h1 className="main__temp">
           <span className="main__temp-value">
-            {currentCity[0].Temperature.Metric.Value}
+            {Math.round(
+              degreeScale === "c"
+                ? currentCity[0].Temperature.Metric.Value
+                : currentCity[0].Temperature.Imperial.Value
+            )}
           </span>
-          <span className="main__temp-unit">&deg;C</span>
+          <span className="main__temp-unit">
+            &deg;{degreeScale === "c" ? "C" : "F"}
+          </span>
         </h1>
         <h2 className="main__heading">{currentCity[0].WeatherText}</h2>
         <span className="main__date">
@@ -750,8 +758,26 @@ const App = () => {
         </span>
       </div>
       <div className="info">
-        <button className="info__button-cel">&deg;C</button>
-        <button className="info__button-far">&deg;F</button>
+        <button
+          className={
+            degreeScale === "c"
+              ? "info__button-cel info__button_active"
+              : "info__button-cel info__button_inactive"
+          }
+          onClick={() => setDegreeScale("c")}
+        >
+          &deg;C
+        </button>
+        <button
+          className={
+            degreeScale === "f"
+              ? "info__button-far info__button_active"
+              : "info__button-far info__button_inactive"
+          }
+          onClick={() => setDegreeScale("f")}
+        >
+          &deg;F
+        </button>
         <div className="info__days">
           <div className="info__days-card">
             <h5 className="info__days-heading">Today</h5>
@@ -797,16 +823,31 @@ const App = () => {
               className="info__days-image"
             ></img>
             <span className="info__days-max">
-              {currentWeek.DailyForecasts[0].Temperature.Maximum.Value}&deg;C
+              {Math.round(
+                degreeScale === "c"
+                  ? currentWeek.DailyForecasts[0].Temperature.Maximum.Value
+                  : currentWeek.DailyForecasts[0].Temperature.Maximum.Value *
+                      1.8 +
+                      32
+              )}
+              &deg;{degreeScale === "c" ? "C" : "F"}
             </span>
             <span className="info__days-min">
-              {currentWeek.DailyForecasts[0].Temperature.Minimum.Value}&deg;C
+              {Math.round(
+                degreeScale === "c"
+                  ? currentWeek.DailyForecasts[0].Temperature.Minimum.Value
+                  : currentWeek.DailyForecasts[0].Temperature.Minimum.Value *
+                      1.8 +
+                      32
+              )}
+              &deg;{degreeScale === "c" ? "C" : "F"}
             </span>
           </div>
           <div className="info__days-card">
             <h5 className="info__days-heading">Tomorrow</h5>
             <img
-              src={ currentWeek.DailyForecasts[1].Day.Icon <= 3 ||
+              src={
+                currentWeek.DailyForecasts[1].Day.Icon <= 3 ||
                 (currentWeek.DailyForecasts[1].Day.Icon >= 32 &&
                   currentWeek.DailyForecasts[1].Day.Icon <= 35)
                   ? clear
@@ -840,15 +881,30 @@ const App = () => {
                       currentWeek.DailyForecasts[1].Day.Icon <= 23) ||
                     currentWeek.DailyForecasts[1].Day.Icon === 44
                   ? snow
-                  : sleet}
+                  : sleet
+              }
               alt="weather-icon"
               className="info__days-image"
             ></img>
             <span className="info__days-max">
-              {currentWeek.DailyForecasts[1].Temperature.Maximum.Value}&deg;C
+              {Math.round(
+                degreeScale === "c"
+                  ? currentWeek.DailyForecasts[1].Temperature.Maximum.Value
+                  : currentWeek.DailyForecasts[1].Temperature.Maximum.Value *
+                      1.8 +
+                      32
+              )}
+              &deg;{degreeScale === "c" ? "C" : "F"}
             </span>
             <span className="info__days-min">
-              {currentWeek.DailyForecasts[1].Temperature.Minimum.Value}&deg;C
+              {Math.round(
+                degreeScale === "c"
+                  ? currentWeek.DailyForecasts[1].Temperature.Minimum.Value
+                  : currentWeek.DailyForecasts[1].Temperature.Minimum.Value *
+                      1.8 +
+                      32
+              )}
+              &deg;{degreeScale === "c" ? "C" : "F"}
             </span>
           </div>
           <div className="info__days-card">
@@ -858,7 +914,8 @@ const App = () => {
                 .substring(0, 10)}
             </h5>
             <img
-              src={ currentWeek.DailyForecasts[2].Day.Icon <= 3 ||
+              src={
+                currentWeek.DailyForecasts[2].Day.Icon <= 3 ||
                 (currentWeek.DailyForecasts[2].Day.Icon >= 32 &&
                   currentWeek.DailyForecasts[2].Day.Icon <= 35)
                   ? clear
@@ -892,15 +949,30 @@ const App = () => {
                       currentWeek.DailyForecasts[2].Day.Icon <= 23) ||
                     currentWeek.DailyForecasts[2].Day.Icon === 44
                   ? snow
-                  : sleet}
+                  : sleet
+              }
               alt="weather-icon"
               className="info__days-image"
             ></img>
             <span className="info__days-max">
-              {currentWeek.DailyForecasts[2].Temperature.Maximum.Value}&deg;C
+              {Math.round(
+                degreeScale === "c"
+                  ? currentWeek.DailyForecasts[2].Temperature.Maximum.Value
+                  : currentWeek.DailyForecasts[2].Temperature.Maximum.Value *
+                      1.8 +
+                      32
+              )}
+              &deg;{degreeScale === "c" ? "C" : "F"}
             </span>
             <span className="info__days-min">
-              {currentWeek.DailyForecasts[2].Temperature.Minimum.Value}&deg;C
+              {Math.round(
+                degreeScale === "c"
+                  ? currentWeek.DailyForecasts[2].Temperature.Minimum.Value
+                  : currentWeek.DailyForecasts[2].Temperature.Minimum.Value *
+                      1.8 +
+                      32
+              )}
+              &deg;{degreeScale === "c" ? "C" : "F"}
             </span>
           </div>
           <div className="info__days-card">
@@ -910,7 +982,8 @@ const App = () => {
                 .substring(0, 10)}
             </h5>
             <img
-              src={ currentWeek.DailyForecasts[3].Day.Icon <= 3 ||
+              src={
+                currentWeek.DailyForecasts[3].Day.Icon <= 3 ||
                 (currentWeek.DailyForecasts[3].Day.Icon >= 32 &&
                   currentWeek.DailyForecasts[3].Day.Icon <= 35)
                   ? clear
@@ -944,15 +1017,30 @@ const App = () => {
                       currentWeek.DailyForecasts[3].Day.Icon <= 23) ||
                     currentWeek.DailyForecasts[3].Day.Icon === 44
                   ? snow
-                  : sleet}
+                  : sleet
+              }
               alt="weather-icon"
               className="info__days-image"
             ></img>
             <span className="info__days-max">
-              {currentWeek.DailyForecasts[3].Temperature.Maximum.Value}&deg;C
+              {Math.round(
+                degreeScale === "c"
+                  ? currentWeek.DailyForecasts[3].Temperature.Maximum.Value
+                  : currentWeek.DailyForecasts[3].Temperature.Maximum.Value *
+                      1.8 +
+                      32
+              )}
+              &deg;{degreeScale === "c" ? "C" : "F"}
             </span>
             <span className="info__days-min">
-              {currentWeek.DailyForecasts[3].Temperature.Minimum.Value}&deg;C
+              {Math.round(
+                degreeScale === "c"
+                  ? currentWeek.DailyForecasts[3].Temperature.Minimum.Value
+                  : currentWeek.DailyForecasts[3].Temperature.Minimum.Value *
+                      1.8 +
+                      32
+              )}
+              &deg;{degreeScale === "c" ? "C" : "F"}
             </span>
           </div>
           <div className="info__days-card">
@@ -962,7 +1050,8 @@ const App = () => {
                 .substring(0, 10)}
             </h5>
             <img
-              src={ currentWeek.DailyForecasts[4].Day.Icon <= 3 ||
+              src={
+                currentWeek.DailyForecasts[4].Day.Icon <= 3 ||
                 (currentWeek.DailyForecasts[4].Day.Icon >= 32 &&
                   currentWeek.DailyForecasts[4].Day.Icon <= 35)
                   ? clear
@@ -996,15 +1085,30 @@ const App = () => {
                       currentWeek.DailyForecasts[4].Day.Icon <= 23) ||
                     currentWeek.DailyForecasts[4].Day.Icon === 44
                   ? snow
-                  : sleet}
+                  : sleet
+              }
               alt="weather-icon"
               className="info__days-image"
             ></img>
             <span className="info__days-max">
-              {currentWeek.DailyForecasts[4].Temperature.Maximum.Value}&deg;C
+              {Math.round(
+                degreeScale === "c"
+                  ? currentWeek.DailyForecasts[4].Temperature.Maximum.Value
+                  : currentWeek.DailyForecasts[4].Temperature.Maximum.Value *
+                      1.8 +
+                      32
+              )}
+              &deg;{degreeScale === "c" ? "C" : "F"}
             </span>
             <span className="info__days-min">
-              {currentWeek.DailyForecasts[4].Temperature.Minimum.Value}&deg;C
+              {Math.round(
+                degreeScale === "c"
+                  ? currentWeek.DailyForecasts[4].Temperature.Minimum.Value
+                  : currentWeek.DailyForecasts[4].Temperature.Minimum.Value *
+                      1.8 +
+                      32
+              )}
+              &deg;{degreeScale === "c" ? "C" : "F"}
             </span>
           </div>
         </div>

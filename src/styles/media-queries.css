@@ -1,0 +1,58 @@
+/* media query for mobile */
+@media screen and (max-width: 1024px) {
+    .app {
+        height: 330vh;
+        grid-template-rows: 100vh 230vh;
+    }
+
+    .main {
+        grid-area: 1 / 1 / span 1 / span 12;
+    }
+
+    .main__image {
+        width: 120%;
+    }
+
+    .info {
+        grid-area: 2 / 1 / span 1 / span 12;
+        grid-template-rows: 10vh 110vh 110vh;
+    }
+
+    .info__button-cel {
+        grid-area: 1 / 4 / span 1 / span 3;
+        justify-self: center;
+    }
+    
+    .info__button-far {
+        grid-area: 1 / 7 / span 1 / span 3;
+        justify-self: center;
+    }
+
+    .info__days {
+        flex-wrap: wrap;
+    }
+
+    .info__days-card {
+        width: 48%;
+        height: 30vh;
+    }
+
+    .info__days-heading {
+        margin-top: 15%;
+    }
+
+    .info__highlights {
+        align-content: space-around;
+        gap: 0;
+        margin-bottom: 5%;
+    }
+
+    .info__highlights-card {
+        width: 100%;
+        padding: 5%;
+    }
+
+    .search-menu {
+        width: 100%;
+    }
+}
